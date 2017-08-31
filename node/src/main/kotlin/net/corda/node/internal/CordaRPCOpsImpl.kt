@@ -136,12 +136,12 @@ class CordaRPCOpsImpl(
         )
     }
 
-    override fun <T : Any> startFlowDynamic(logicType: Class<out FlowLogic<T>>, vararg args: Any?): FlowHandle<T> {
+    override fun <T> startFlowDynamic(logicType: Class<out FlowLogic<T>>, vararg args: Any?): FlowHandle<T> {
         val stateMachine = startFlow(logicType, args)
         return FlowHandleImpl(id = stateMachine.id, returnValue = stateMachine.resultFuture)
     }
 
-    private fun <T : Any> startFlow(logicType: Class<out FlowLogic<T>>, args: Array<out Any?>): FlowStateMachineImpl<T> {
+    private fun <T> startFlow(logicType: Class<out FlowLogic<T>>, args: Array<out Any?>): FlowStateMachineImpl<T> {
         require(logicType.isAnnotationPresent(StartableByRPC::class.java)) { "${logicType.name} was not designed for RPC" }
         val rpcContext = getRpcContext()
         rpcContext.requirePermission(startFlowPermission(logicType))
@@ -170,8 +170,6 @@ class CordaRPCOpsImpl(
         }
     }
 
-    override fun authoriseContractUpgrade(state: StateAndRef<*>, upgradedContractClass: Class<out UpgradedContract<*, *>>) = services.contractUpgradeService.authoriseContractUpgrade(state, upgradedContractClass)
-    override fun deauthoriseContractUpgrade(state: StateAndRef<*>) = services.contractUpgradeService.deauthoriseContractUpgrade(state)
     override fun currentNodeTime(): Instant = Instant.now(services.clock)
     override fun waitUntilNetworkReady() = services.networkMapCache.nodeReady
     override fun partyFromAnonymous(party: AbstractParty): Party? = services.identityService.partyFromAnonymous(party)

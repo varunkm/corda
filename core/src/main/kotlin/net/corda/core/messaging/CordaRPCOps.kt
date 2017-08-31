@@ -194,7 +194,7 @@ interface CordaRPCOps : RPCOps {
      * Start the given flow with the given arguments. [logicType] must be annotated with [net.corda.core.flows.StartableByRPC].
      */
     @RPCReturnsObservables
-    fun <T : Any> startFlowDynamic(logicType: Class<out FlowLogic<T>>, vararg args: Any?): FlowHandle<T>
+    fun <T> startFlowDynamic(logicType: Class<out FlowLogic<T>>, vararg args: Any?): FlowHandle<T>
 
     /**
      * Start the given flow with the given arguments, returning an [Observable] with a single observation of the
@@ -232,20 +232,6 @@ interface CordaRPCOps : RPCOps {
      * Uploads a jar to the node, returns it's hash.
      */
     fun uploadAttachment(jar: InputStream): SecureHash
-
-    /**
-     * Authorise a contract state upgrade.
-     * This will store the upgrade authorisation in the vault, and will be queried by [ContractUpgradeFlow.Acceptor] during contract upgrade process.
-     * Invoking this method indicate the node is willing to upgrade the [state] using the [upgradedContractClass].
-     * This method will NOT initiate the upgrade process. To start the upgrade process, see [ContractUpgradeFlow.Instigator].
-     */
-    fun authoriseContractUpgrade(state: StateAndRef<*>, upgradedContractClass: Class<out UpgradedContract<*, *>>)
-
-    /**
-     * Authorise a contract state upgrade.
-     * This will remove the upgrade authorisation from the vault.
-     */
-    fun deauthoriseContractUpgrade(state: StateAndRef<*>)
 
     /**
      * Returns the node's current time.
@@ -332,7 +318,7 @@ inline fun <T : Any, reified R : FlowLogic<T>> CordaRPCOps.startFlow(
         flowConstructor: () -> R
 ): FlowHandle<T> = startFlowDynamic(R::class.java)
 
-inline fun <T : Any, A, reified R : FlowLogic<T>> CordaRPCOps.startFlow(
+inline fun <T , A, reified R : FlowLogic<T>> CordaRPCOps.startFlow(
         @Suppress("UNUSED_PARAMETER")
         flowConstructor: (A) -> R,
         arg0: A
