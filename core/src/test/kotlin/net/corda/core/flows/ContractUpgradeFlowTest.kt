@@ -85,15 +85,15 @@ class ContractUpgradeFlowTest {
 
         // Party B authorise the contract state upgrade, and immediately deauthorise the same.
         b.services.startFlow(ContractUpgradeFlow.Authorise(btx!!.tx.outRef<ContractState>(0), DummyContractV2::class.java)).resultFuture.getOrThrow()
-        b.services.startFlow(ContractUpgradeFlow.Deauthorise(btx!!.tx.outRef<ContractState>(0).ref)).resultFuture.getOrThrow()
+        b.services.startFlow(ContractUpgradeFlow.Deauthorise(btx.tx.outRef<ContractState>(0).ref)).resultFuture.getOrThrow()
 
         // The request is expected to be rejected because party B has subsequently deauthorised and a previously authorised upgrade.
-        val deauthorisedFuture = a.services.startFlow(ContractUpgradeFlow.Initiator(atx!!.tx.outRef(0), DummyContractV2::class.java)).resultFuture
+        val deauthorisedFuture = a.services.startFlow(ContractUpgradeFlow.Initiator(atx.tx.outRef(0), DummyContractV2::class.java)).resultFuture
         mockNet.runNetwork()
         assertFailsWith(UnexpectedFlowEndException::class) { deauthorisedFuture.getOrThrow() }
 
         // Party B authorise the contract state upgrade
-        b.services.startFlow(ContractUpgradeFlow.Authorise(btx!!.tx.outRef<ContractState>(0), DummyContractV2::class.java)).resultFuture.getOrThrow()
+        b.services.startFlow(ContractUpgradeFlow.Authorise(btx.tx.outRef<ContractState>(0), DummyContractV2::class.java)).resultFuture.getOrThrow()
 
         // Party A initiates contract upgrade flow, expected to succeed this time.
         val resultFuture = a.services.startFlow(ContractUpgradeFlow.Initiator(atx.tx.outRef(0), DummyContractV2::class.java)).resultFuture
@@ -143,7 +143,9 @@ class ContractUpgradeFlowTest {
             val user = rpcTestUser.copy(permissions = setOf(
                     startFlowPermission<FinalityInvoker>(),
                     startFlowPermission<ContractUpgradeFlow.Initiator<*, *>>(),
-                    startFlowPermission<ContractUpgradeFlow.Acceptor>()
+                    startFlowPermission<ContractUpgradeFlow.Acceptor>(),
+                    startFlowPermission<ContractUpgradeFlow.Authorise>(),
+                    startFlowPermission<ContractUpgradeFlow.Deauthorise>()
             ))
             val rpcA = startProxy(a, user)
             val rpcB = startProxy(b, user)
@@ -168,11 +170,11 @@ class ContractUpgradeFlowTest {
                     btx!!.tx.outRef<ContractState>(0),
                     DummyContractV2::class.java).returnValue
             rpcB.startFlow( { stateRef -> ContractUpgradeFlow.Deauthorise(stateRef) },
-                    btx!!.tx.outRef<ContractState>(0).ref).returnValue
+                    btx.tx.outRef<ContractState>(0).ref).returnValue
 
             // The request is expected to be rejected because party B has subsequently deauthorised and a previously authorised upgrade.
             val deauthorisedFuture = rpcA.startFlow( {stateAndRef, upgrade -> ContractUpgradeFlow.Initiator(stateAndRef, upgrade) },
-                    atx!!.tx.outRef<DummyContract.State>(0),
+                    atx.tx.outRef<DummyContract.State>(0),
                     DummyContractV2::class.java).returnValue
 
             mockNet.runNetwork()
@@ -180,7 +182,7 @@ class ContractUpgradeFlowTest {
 
             // Party B authorise the contract state upgrade.
             rpcB.startFlow( { stateAndRef, upgrade -> ContractUpgradeFlow.Authorise(stateAndRef, upgrade ) },
-                    btx!!.tx.outRef<ContractState>(0),
+                    btx.tx.outRef<ContractState>(0),
                     DummyContractV2::class.java).returnValue
 
             // Party A initiates contract upgrade flow, expected to succeed this time.
