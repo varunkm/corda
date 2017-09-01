@@ -11,8 +11,11 @@ import java.security.PublicKey
 import java.util.*
 
 /**
- * A tree data structure that enables the representation of composite public keys.
- * Notice that with that implementation CompositeKey extends PublicKey. Leaves are represented by single public keys.
+ * A tree data structure that enables the representation of composite public keys, which are used to represent
+ * the signing requirements for multisignature scenarios such as RAFT notary services. A composite key is a list
+ * of leaf keys and their contributing weight, and each leaf can be a conventional single key or a composite key.
+ * Keys contribute their weight to the total if they are matched by the signature, and the [threshold] specifies
+ * the minimum total weight required to satisfy the sub-tree rooted at this node.
  *
  * For complex scenarios, such as *"Both Alice and Bob need to sign to consume a state S"*, we can represent
  * the requirement by creating a tree with a root [CompositeKey], and Alice and Bob as children.
@@ -21,11 +24,6 @@ import java.util.*
  *
  * Using these constructs we can express e.g. 1 of N (OR) or N of N (AND) signature requirements. By nesting we can
  * create multi-level requirements such as *"either the CEO or 3 of 5 of his assistants need to sign"*.
- *
- * [CompositeKey] maintains a list of [NodeAndWeight]s which holds child subtree with associated weight carried by child node signatures.
- *
- * The [threshold] specifies the minimum total weight required (in the simple case – the minimum number of child
- * signatures required) to satisfy the sub-tree rooted at this node.
  */
 @CordaSerializable
 class CompositeKey private constructor(val threshold: Int, children: List<NodeAndWeight>) : PublicKey {
